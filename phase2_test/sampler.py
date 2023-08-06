@@ -27,7 +27,7 @@ class CBEffectNumSampler(torch.utils.data.sampler.Sampler):
             if num_samples is None else num_samples
 
         # distribution of classes in the dataset
-        label_to_count = [0] * len(np.unique(dataset.labels))
+        label_to_count = [0] * len(np.unique(dataset.targets))
         for idx in self.indices:
             label = self._get_label(dataset, idx)
             label_to_count[label] += 1
@@ -50,7 +50,7 @@ class CBEffectNumSampler(torch.utils.data.sampler.Sampler):
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-        return dataset.labels[idx]
+        return dataset.targets[idx]
 
     def __iter__(self):
         return iter(torch.multinomial(self.weights, self.num_samples, replacement=True).tolist())
@@ -73,7 +73,7 @@ class BalancedDatasetSampler(torch.utils.data.sampler.Sampler):
             if num_samples is None else num_samples
 
         # distribution of classes in the dataset
-        label_to_count = [0] * len(np.unique(dataset.labels))
+        label_to_count = [0] * len(np.unique(dataset.targets))
         for idx in self.indices:
             label = self._get_label(dataset, idx)
             label_to_count[label] += 1
@@ -88,7 +88,7 @@ class BalancedDatasetSampler(torch.utils.data.sampler.Sampler):
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-        return dataset.labels[idx]
+        return dataset.targets[idx]
 
     def __iter__(self):
         return iter(torch.multinomial(self.weights, self.num_samples, replacement=True).tolist())
@@ -405,7 +405,7 @@ class ClassPrioritySampler(Sampler):
 
         # Get num of samples per class
         self.cls_cnts = []
-        self.labels = labels = np.array(self.dataset.labels)
+        self.labels = labels = np.array(self.dataset.targets)
         for l in np.unique(labels):
             self.cls_cnts.append(np.sum(labels==l))
         self.num_classes = len(self.cls_cnts)
@@ -413,7 +413,7 @@ class ClassPrioritySampler(Sampler):
         
         # Get per-class image indexes
         self.cls_idxs = [[] for _ in range(self.num_classes)]
-        for i, label in enumerate(self.dataset.labels):
+        for i, label in enumerate(self.dataset.targets):
             self.cls_idxs[label].append(i)
         self.data_iter_list = [RandomCycleIter(x) for x in self.cls_idxs]
         for ci in range(self.num_classes):
@@ -634,7 +634,7 @@ class ClassAwareSampler (Sampler):
         num_classes = len(np.unique(data_source.labels))
         self.class_iter = RandomCycleIter(range(num_classes))
         cls_data_list = [list() for _ in range(num_classes)]
-        for i, label in enumerate(data_source.labels):
+        for i, label in enumerate(data_source.targets):
             cls_data_list[label].append(i)
         self.data_iter_list = [RandomCycleIter(x) for x in cls_data_list]
         self.num_samples = max([len(x) for x in cls_data_list]) * len(cls_data_list)
